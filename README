@@ -1,5 +1,5 @@
-Collection of scripts mostly developed to save time / provide automation of previously manual tasks
+Collection of scripts developed to automate of previously manual tasks
 
-    - herzog : concurrently runs N simwalk instances on an N-core machine
-    - messner : retrieve name of SNP rs id at LOD peak
+    - herzog  : concurrently runs N simwalk instances on an N-core machine
+    - messner : retrieve names of SNPs to the left and right of LOD score peaks over a given threshold
 
