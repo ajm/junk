@@ -123,6 +123,21 @@ elif program == 'genehunter' :
     print "Genehunter Estimated LOD = %s" % o
 
 elif program == 'simwalk' :
-    raise NotImplemented
+    shutil.copy('c21/datain_1.21',  'elod')
+    shutil.copy('c21/map_1.21',     'elod')
+    shutil.copy('c21/pedin_1.21',   'elod/old_pedin_1.21')
 
+    rewrite_pedin('elod/old_pedin_1.21','elod/pedin_1.21')
+
+    os.chdir('elod')
+
+    print "Please note, this can take a long time..."
+    s,o = commands.getstatusoutput('simwalk2')
+    if s != 0 :
+        print >> sys.stderr, "simwalk did not run successfully!"
+        print >> sys.stderr, o
+        sys.exit(-1)
+
+    s,o = commands.getstatusoutput("") # TODO : quick command line magic to extract highest LOD
+    print "Simwalk Estimated LOD = %s" % o
 
