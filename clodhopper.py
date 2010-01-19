@@ -7,11 +7,13 @@ def usage() :
     print >> sys.stderr, "\tprogram can be simwalk, genehunter or allegro"
     sys.exit(-1)
 
-if len(sys.argv) != 2 and len(sys.argv) != 3 : #or sys.argv[1] not in ['simwalk','genehunter','allegro'] :
+
+if len(sys.argv) != 2 and len(sys.argv) != 3 :
     usage()
 
 if sys.argv[1] not in ['simwalk','genehunter','allegro'] :
     usage()
+
 
 program = sys.argv[1]
 if len(sys.argv) == 2 :
@@ -42,22 +44,21 @@ if program == 'allegro' :
     lines = f.readlines()
     f.close()
 
-    g = open('elod/pedin.21', 'w')
-
-    # find affected individuals
-    # find both unaffected + unaffacted siblings of affected
+    # find affected individuals + remember their parents
+    # so later we will know who is the sibling of an affected
     affecteds = {}
     for line in lines :
-        line = line.strip()
-        data = line.split()
+        data = line.strip().split()
         affected = int(data[5]) == 2
 
         if affected :
-            affecteds[data[1]] = (data[2], data[3])
+            affecteds[data[1]] = (data[2], data[3]) # affecteds[ child ] = ( mother, father )
 
+
+    # rewrite pedin
+    g = open('elod/pedin.21', 'w')
     for line in lines :
-        line = line.strip()
-        data = line.split()
+        data = line.strip().split()
         affected = int(data[5]) == 2
 
         i = len(data[6:])
@@ -66,27 +67,33 @@ if program == 'allegro' :
             sys.exit(-1)
 
         hetero = ['1','2'] * (i / 2)
-        homo1  = ['1','1'] * (homozygous_length * 2)
-        homo2  = ['2','2'] * (homozygous_length * 2)
+        homo1  = ['1','1'] * homozygous_length
+        homo2  = ['2','2'] * homozygous_length
 
+        splice = (i / 2) - homozygous_length
+
+        # ids, status, etc
         print >> g, ' '.join(data[:6]),
+
         if not affected :
-            if (data[2],data[3]) in affecteds.values() :
-                l = ((i / 2) - homozygous_length)
-                aff = (hetero[:l] + homo2 + hetero[l:])[:len(hetero)]
+            if ( data[2], data[3] ) in affecteds.values() :                
+                aff = hetero[:splice] + homo2 + hetero[-splice:]
                 print >> g, ' '.join(aff)
             else :
                 print >> g, ' '.join(hetero)
         else :
-            l = ((i / 2) - homozygous_length)
-            aff = (hetero[:l] + homo1 + hetero[l:])[:len(hetero)]
+            aff = hetero[:splice] + homo1 + hetero[-splice:]
             print >> g, ' '.join(aff)
 
     g.close()
     os.chdir('elod')
-    os.system('allegro allegro.in &> /dev/null')
-    s,o = command.getstatusoutput('grep -v "LOD" param_mpt.21 | awk \'{ print $2 }\' | sort -nr | head -1')
+    s,o = commands.getstatusoutput('allegro allegro.in')
+    if s != 0 :
+        print >> sys.stderr, "allegro did not run successfully!"
+        print >> sys.stderr, o
+        sys.exit(-1)
 
+    s,o = commands.getstatusoutput('grep -v "LOD" param_mpt.21 | awk \'{ print $2 }\' | sort -nr | head -1')
     print "Allegro Estimated LOD = %s" % o
 
 elif program == 'genehunter' :
