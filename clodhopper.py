@@ -7,6 +7,53 @@ def usage() :
     print >> sys.stderr, "\tprogram can be simwalk, genehunter or allegro"
     sys.exit(-1)
 
+def rewrite_pedin(oldfilename, newfilename) :
+    f = open(oldfilename)
+    lines = f.readlines()
+    f.close()
+
+    # find affected individuals + remember their parents
+    # so later we will know who is the sibling of an affected
+    affecteds = {}
+    for line in lines :
+        data = line.strip().split()
+        affected = int(data[5]) == 2
+
+        if affected :
+            affecteds[data[1]] = (data[2], data[3]) # affecteds[ child ] = ( mother, father )
+
+    # rewrite pedin
+    g = open(newfilename, 'w')
+    for line in lines :
+        data = line.strip().split()
+        affected = int(data[5]) == 2
+
+        i = len(data[6:])
+        if (i % 2) != 0 :
+            print >> sys.stderr, "error, uneven number of alleles, are these haploid? (%d)" % i
+            sys.exit(-1)
+
+        hetero = ['1','2'] * (i / 2)
+        homo1  = ['1','1'] * homozygous_length
+        homo2  = ['2','2'] * homozygous_length
+
+        splice = (i / 2) - homozygous_length
+
+        # ids, status, etc
+        print >> g, ' '.join(data[:6]),
+
+        if not affected :
+            if ( data[2], data[3] ) in affecteds.values() :
+                aff = hetero[:splice] + homo2 + hetero[-splice:]
+                print >> g, ' '.join(aff)
+            else :
+                print >> g, ' '.join(hetero)
+        else :
+            aff = hetero[:splice] + homo1 + hetero[-splice:]
+            print >> g, ' '.join(aff)
+
+    g.close()
+
 
 if len(sys.argv) != 2 and len(sys.argv) != 3 :
     usage()
@@ -29,63 +76,24 @@ if not os.path.isdir('c21') :
     print >> sys.stderr, "error, could not find c21 directory, exiting..."
     sys.exit(-1)
 
-try :
-    os.rmdir('elod')
-    os.mkdir('elod')
-except :
-    pass
+shutil.rmtree('elod', ignore_errors=True)
+os.mkdir('elod')
 
 if program == 'allegro' :
     shutil.copy('c21/datain.21', 'elod')
     shutil.copy('c21/pedin.21',  'elod/old_pedin.21')
     shutil.copy('c21/map.21',    'elod')
 
-    f = open('elod/old_pedin.21')
-    lines = f.readlines()
+    rewrite_pedin('elod/old_pedin.21','elod/pedin.21')
+
+    f = open('elod/allegro.in', 'w')
+    print >> f, \
+"""PREFILE pedin.21
+DATFILE datain.21
+MODEL mpt par het param_mpt.21
+MAXMEMORY 1024"""
     f.close()
 
-    # find affected individuals + remember their parents
-    # so later we will know who is the sibling of an affected
-    affecteds = {}
-    for line in lines :
-        data = line.strip().split()
-        affected = int(data[5]) == 2
-
-        if affected :
-            affecteds[data[1]] = (data[2], data[3]) # affecteds[ child ] = ( mother, father )
-
-
-    # rewrite pedin
-    g = open('elod/pedin.21', 'w')
-    for line in lines :
-        data = line.strip().split()
-        affected = int(data[5]) == 2
-
-        i = len(data[6:])
-        if (i % 2) != 0 :
-            print >> sys.stderr, "error, uneven number of alleles, are these haploid? (%d)" % i
-            sys.exit(-1)
-
-        hetero = ['1','2'] * (i / 2)
-        homo1  = ['1','1'] * homozygous_length
-        homo2  = ['2','2'] * homozygous_length
-
-        splice = (i / 2) - homozygous_length
-
-        # ids, status, etc
-        print >> g, ' '.join(data[:6]),
-
-        if not affected :
-            if ( data[2], data[3] ) in affecteds.values() :                
-                aff = hetero[:splice] + homo2 + hetero[-splice:]
-                print >> g, ' '.join(aff)
-            else :
-                print >> g, ' '.join(hetero)
-        else :
-            aff = hetero[:splice] + homo1 + hetero[-splice:]
-            print >> g, ' '.join(aff)
-
-    g.close()
     os.chdir('elod')
     s,o = commands.getstatusoutput('allegro allegro.in')
     if s != 0 :
@@ -97,7 +105,22 @@ if program == 'allegro' :
     print "Allegro Estimated LOD = %s" % o
 
 elif program == 'genehunter' :
-    raise NotImplemented
+    shutil.copy('c21/datain_1.21',  'elod')
+    shutil.copy('c21/map_1.21',     'elod')
+    shutil.copy('c21/setup_1.21',   'elod')
+    shutil.copy('c21/pedin_1.21',   'elod/old_pedin_1.21')
+
+    rewrite_pedin('elod/old_pedin_1.21','elod/pedin_1.21')
+
+    os.chdir('elod')
+    s,o = commands.getstatusoutput('ghm < setup_1.21')
+    if s != 0 :
+        print >> sys.stderr, "genehunter did not run successfully!"
+        print >> sys.stderr, o
+        sys.exit(-1)
+
+    s,o = commands.getstatusoutput("grep \"^\ \ \ \w\" gh_1.out | grep \"(\" | awk \'{ print $2 }\' | sort -nr | head -1")
+    print "Genehunter Estimated LOD = %s" % o
 
 elif program == 'simwalk' :
     raise NotImplemented
