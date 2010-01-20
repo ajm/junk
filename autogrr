@@ -1,0 +1,71 @@
+#!/bin/bash
+# this program automates running GRR
+# it assumes xautomation, wine and grr are installed
+# and that grr is found in the default location
+# specified by the installer
+
+if [[ $# != 2 ]] ; then
+    echo "Usage:" $0 "<project name>" "<pedin file>"
+    echo ""
+    exit -1
+fi
+
+if [[ `ps aux | grep -i 'GRR\.exe' | grep -vc grep` != 0 ]] ; then
+    echo "error, close other instances of grr..."
+    exit -1
+fi
+
+project=$1
+pedin=$2
+pedtxt=`pwd`'/grr_info.txt'
+pedpng=`pwd`'/grr_screenshot.png'
+winpedin=`echo $pedin | sed s@/@\\\\\\\\@g` # this is insane! eight backslashes to get one!
+winpedtxt=`echo $pedtxt | sed s@/@\\\\\\\\@g`
+
+wine $HOME/.wine/drive_c/Program\ Files/Genetics/GRR/GRR.exe &
+grrpid=$!
+
+sleep 3
+
+# grr position
+xpos=`xwininfo -name 'Allele Sharing Quality Control' | grep Absol | awk '{ print $4 }' | head -1`
+ypos=`xwininfo -name 'Allele Sharing Quality Control' | grep Absol | awk '{ print $4 }' | tail -1`
+
+# tick other relatives
+xte "mousemove `expr $xpos + 542` `expr $ypos + 193`" "mouseclick 1" "sleep 1"
+
+# change the title
+xte "mousemove `expr $xpos + 300` `expr $ypos + 50`"  "mouseclick 1" "sleep 1" "str $project" \
+    "sleep 1" "mousemove `expr $xpos + 300` `expr $ypos + 205`" "mouseclick 1" "sleep 1"
+
+# load pedin
+xte "mousemove `expr $xpos + 600` `expr $ypos + 235`" "mouseclick 1" "sleep 1" "str $winpedin" \
+    "sleep 1" "keydown Alt_L" "key O" "keyup Alt_L" "sleep 1"
+
+# load dialog
+dxpos=`xwininfo -name 'Load Pedigree File' | grep Absol | awk '{ print $4 }' | head -1`
+dypos=`xwininfo -name 'Load Pedigree File' | grep Absol | awk '{ print $4 }' | tail -1`
+xte "mousemove `expr $dxpos + 23`  `expr $dypos + 50`"  "mouseclick 1" "sleep 1" \
+    "mousemove `expr $dxpos + 100` `expr $dypos + 210`" "mouseclick 1" "sleep 1"
+sleep 3
+
+# drag-select all points
+xte "mousemove `expr $xpos + 75`  `expr $ypos + 85`"  "mousedown 1" "sleep 1" \
+    "mousemove `expr $xpos + 480` `expr $ypos + 330`" "mouseup 1" "sleep 1"
+
+# IBS Details dialog
+dxpos=`xwininfo -name 'IBS Details' | grep Absol | awk '{ print $4 }' | head -1`
+dypos=`xwininfo -name 'IBS Details' | grep Absol | awk '{ print $4 }' | tail -1`
+xte "mousemove `expr $dxpos + 400`  `expr $dypos + 195`"  "mouseclick 1" "sleep 1" \
+    "str $winpedtxt" "keydown Alt_L" "key S" "keyup Alt_L" "sleep 1" \
+    "mousemove `expr $dxpos + 500`  `expr $dypos + 195`" "mouseclick 1" "sleep 1"
+
+# screenshot
+import -window `xwininfo -name 'Allele Sharing Quality Control' | grep "xwininfo" | awk '{ print $4 }'` $pedpng
+sleep 1
+
+# quit grr
+xte "mousemove `expr $xpos + 600` `expr $ypos + 360`" "mouseclick 1"
+
+#kill $grrpid
+
