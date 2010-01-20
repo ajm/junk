@@ -138,6 +138,6 @@ elif program == 'simwalk' :
         print >> sys.stderr, o
         sys.exit(-1)
 
-    s,o = commands.getstatusoutput("") # TODO : quick command line magic to extract highest LOD
+    s,o = commands.getstatusoutput("grep \"^\W*,.*\.\" SCORE-21_1.ALL | awk \'{ print $4 }\' | sort -nr | head -1")
     print "Simwalk Estimated LOD = %s" % o
 
