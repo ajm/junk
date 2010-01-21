@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys
+import os
 
 if len(sys.argv) != 3 :
     print >> sys.stderr, "Usage: %s <messner output> <program>\n" % sys.argv[0]
