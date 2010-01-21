@@ -178,12 +178,13 @@ sub pr_batch {
 	}
 	else {
 		print out5 "set ylabel \"LOD score\"\n";
-		print out5 "set output \"allegro_lod_${chr}.ps\"\n";
+#		print out5 "set output \"allegro_lod_${chr}.ps\"\n";
+        print out5 "set output \"allegro_lod_${ARGV[0]}.ps\"\n";
 		print out5 "plot \[$xmin\:$xsum\] \[$ymin\:$ymax\]  \'chr_line\' notitle with lines lt 0, \'lod.plt\' title 'LOD' with lines lt 1\n";
 	}		
-	print out5 "set terminal x11\n";
-	print out5 "replot\n";
-	print out5 "\npause -1 \"Hit return to continue\"\n\n";
+#	print out5 "set terminal x11\n";
+#	print out5 "replot\n";
+#	print out5 "\npause -1 \"Hit return to continue\"\n\n";
 
 	close (out5);
 
