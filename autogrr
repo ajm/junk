@@ -22,7 +22,7 @@ pedpng=`pwd`'/grr_screenshot.png'
 winpedin=`echo $pedin | sed s@/@\\\\\\\\@g` # this is insane! eight backslashes to get one!
 winpedtxt=`echo $pedtxt | sed s@/@\\\\\\\\@g`
 
-wine $HOME/.wine/drive_c/Program\ Files/Genetics/GRR/GRR.exe &
+wine $HOME/.wine/drive_c/Program\ Files/Genetics/GRR/GRR.exe &>/dev/null &
 grrpid=$!
 
 sleep 3
@@ -47,7 +47,7 @@ dxpos=`xwininfo -name 'Load Pedigree File' | grep Absol | awk '{ print $4 }' | h
 dypos=`xwininfo -name 'Load Pedigree File' | grep Absol | awk '{ print $4 }' | tail -1`
 xte "mousemove `expr $dxpos + 23`  `expr $dypos + 50`"  "mouseclick 1" "sleep 1" \
     "mousemove `expr $dxpos + 100` `expr $dypos + 210`" "mouseclick 1" "sleep 1"
-sleep 3
+sleep 10
 
 # drag-select all points
 xte "mousemove `expr $xpos + 75`  `expr $ypos + 85`"  "mousedown 1" "sleep 1" \
@@ -57,7 +57,7 @@ xte "mousemove `expr $xpos + 75`  `expr $ypos + 85`"  "mousedown 1" "sleep 1" \
 dxpos=`xwininfo -name 'IBS Details' | grep Absol | awk '{ print $4 }' | head -1`
 dypos=`xwininfo -name 'IBS Details' | grep Absol | awk '{ print $4 }' | tail -1`
 xte "mousemove `expr $dxpos + 400`  `expr $dypos + 195`"  "mouseclick 1" "sleep 1" \
-    "str $winpedtxt" "keydown Alt_L" "key S" "keyup Alt_L" "sleep 1" \
+    "str $winpedtxt" "sleep 1" "keydown Alt_L" "key S" "keyup Alt_L" "sleep 1" \
     "mousemove `expr $dxpos + 500`  `expr $dypos + 195`" "mouseclick 1" "sleep 1"
 
 # screenshot
