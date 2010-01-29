@@ -25,7 +25,7 @@ winpedtxt=`echo $pedtxt | sed s@/@\\\\\\\\@g`
 wine $HOME/.wine/drive_c/Program\ Files/Genetics/GRR/GRR.exe &>/dev/null &
 grrpid=$!
 
-sleep 3
+sleep 5
 
 # grr position
 xpos=`xwininfo -name 'Allele Sharing Quality Control' | grep Absol | awk '{ print $4 }' | head -1`

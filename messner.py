@@ -4,7 +4,7 @@ import sys, os, re, os.path, getopt
 version = 0.2
 
 debug = False
-PEAK_THRESHOLD = 3
+PEAK_THRESHOLD = 3.0
 filename_pat = None
 
 #simwalk_filename_pat = re.compile("^SCORE\-(\d\d)\_(\d+)\.ALL$")
@@ -127,9 +127,10 @@ for o, a in opts:
 			sys.exit(-1)
 	elif o in ("-l","--lod"):
 		try :
-			PEAK_THRESHOLD = int(a)
+			PEAK_THRESHOLD = float(a)
+
 		except :
-			print >> sys.stderr, "Error: peak must be an integer"
+			print >> sys.stderr, "Error: lod score must be a number"
 			sys.exit(-1)
 	else:
 		assert False, "unhandled option"
