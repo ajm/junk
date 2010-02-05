@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [[ $# != 1 ]]; then
+	echo "Usage: autogrr_multiple <project name>"
+	echo 
+	exit -1
+fi
+
+project=$1
+
+for i in `awk '{ print $1 }' grr_pedfile.dat | sort -n | uniq`; do
+	grep "^$i" grr_pedfile.dat > grr_pedfile.dat.$i
+	autogrr "$project-family-$i" grr_pedfile.dat.$i
+
+	sleep 2
+done

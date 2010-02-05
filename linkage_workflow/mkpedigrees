@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [[ $# != 1 ]] ; then
+	echo "Usage: mkpedigrees.sh <pedfile.pro>"
+	echo
+	exit -1
+fi
+
+for i in `awk '{ print $1 }' pedfile.pro | uniq | sort -n`; do
+	HaploPainter1.043.pl -b -sortbygender 1 -pedfile pedfile.pro -family $i -outfile family_$i.pdf -outformat pdf
+	echo created family_$i.pdf ...
+done
+

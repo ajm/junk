@@ -91,7 +91,8 @@ if program == 'allegro' :
 """PREFILE pedin.21
 DATFILE datain.21
 MODEL mpt par het param_mpt.21
-MAXMEMORY 1024"""
+MAXMEMORY 1024
+MTBDDTHRESHOLD 25"""
     f.close()
 
     os.chdir('elod')
@@ -101,8 +102,8 @@ MAXMEMORY 1024"""
         print >> sys.stderr, o
         sys.exit(-1)
 
-    s,o = commands.getstatusoutput('grep -v "LOD" param_mpt.21 | awk \'{ print $2 }\' | sort -nr | head -1')
-    print "Allegro Estimated LOD = %s" % o
+    s,o = commands.getstatusoutput('grep -v "LOD" param_mpt.21 | awk \'{ print $2 }\' | sort -nr')
+    print "Allegro Estimated LOD = %s" % o.split('\n')[0]
 
 elif program == 'genehunter' :
     shutil.copy('c21/datain_1.21',  'elod')
@@ -119,8 +120,8 @@ elif program == 'genehunter' :
         print >> sys.stderr, o
         sys.exit(-1)
 
-    s,o = commands.getstatusoutput("grep \"^\ \ \ \w\" gh_1.out | grep \"(\" | awk \'{ print $2 }\' | sort -nr | head -1")
-    print "Genehunter Estimated LOD = %s" % o
+    s,o = commands.getstatusoutput("grep \"^\ \ \ \w\" gh_1.out | grep \"(\" | awk \'{ print $2 }\' | sort -nr")
+    print "Genehunter Estimated LOD = %s" % o.split('\n')[0]
 
 elif program == 'simwalk' :
     shutil.copy('c21/datain_1.21',  'elod')
@@ -138,6 +139,6 @@ elif program == 'simwalk' :
         print >> sys.stderr, o
         sys.exit(-1)
 
-    s,o = commands.getstatusoutput("grep \"^\W*,.*\.\" SCORE-21_1.ALL | awk \'{ print $4 }\' | sort -nr | head -1")
-    print "Simwalk Estimated LOD = %s" % o
+    s,o = commands.getstatusoutput("grep \"^\W*,.*\.\" SCORE-21_1.ALL | awk \'{ print $4 }\' | sort -nr")
+    print "Simwalk Estimated LOD = %s" % o.split('\n')[0]
 
