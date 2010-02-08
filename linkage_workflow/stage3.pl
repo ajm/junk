@@ -19,6 +19,7 @@ $del_unlikely=1;
 
 $subsets=1;
 $gh_ps2=0;
+$gh_mb=20;
 $gh_prog="ghm";
 $maxsnp=200;
 
