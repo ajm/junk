@@ -10,7 +10,6 @@ genehunter_flag = False
 simwalk_flag    = False
 allegro_flag    = False
 
-#format          = None
 mapfile         = None
 mode            = "simwalk"
 formats         = ("illumina","decode")
@@ -23,8 +22,6 @@ physical_positions  = {}
 
 # simwalk
 simwalk_rsid = re.compile("^rs|s|\d\d+$")
-#imwalk_rsid_illumina = re.compile("^rs|s|\d\d+$")
-#imwalk_rsid_decode = re.compile("^(\-\d+)$")
 simwalk_lod = re.compile("^\
 \s*\,\s*(\-?\d+\.\d+)\
 \s*\,\s*(\-?\d+\.\d+)\
@@ -44,17 +41,16 @@ class map_entry :
         self.physical_position = phypos
         self.probeid = probeid
 
-# this is a horrible hack, (at least it takes log(n) iterations)
-# the idea is that genehunter positions do not match any physical positions
-# hence we need to find the closest position that contains a valid marker 
-# from the map - annoyingly many markers map to the same positions reported
-# by genehunter (annecdotally, the first 5 positions in a gh file I am working
-# on are all 0.00)
+# this is a horrible hack, (at least it only takes log(n) iterations)
+# the idea is that genehunter positions do not match any of the real physical 
+# positions, hence we need to find the closest position that contains a valid 
+# marker from the map - annoyingly many markers map to the same positions 
+# reported by genehunter (annecdotally, the first 5 positions in a gh file I 
+# am working on are all 0.00)
 def find_phys(position_list, pos):
     pos *= 1e6
     pos = int(pos)
 
-    #poz = physical_positions[chromosome]
     poz = position_list
     index = len(poz) / 2
     next_jump = index
@@ -63,20 +59,18 @@ def find_phys(position_list, pos):
         phys1 = poz[index]
         next_jump /= 2
 
-        if next_jump < 1 :
-            next_jump = 1
+#        if next_jump < 1 :
+#            next_jump = 1
 
         if pos < phys1 :
-#            print "-"
             index -= next_jump
         else :
-#            print "+"
             index += next_jump
 
         if index == len(poz) :
-            return poz[-1]#, poz[-1]
+            return poz[-1]
         if index == 0 :
-            return poz[0]#, poz[0]
+            return poz[0]
 
         try :
             phys2 = poz[index]
@@ -84,22 +78,16 @@ def find_phys(position_list, pos):
             print >> sys.stderr, "i=%d jump=%d poz=%d : %s" % (index, next_jump, len(poz), str(e))
             sys.exit(-1)
 
-#        print "[%d]\tindex = %d,\tjump = %d,\tpos = %d,\trs = %s" % (pos, index, next_jump, poz[index], physical_map[(chromosome,poz[index])].rs)
-#        print "phy1 = %d, phy2 = %d" % (phys1,phys2)
-
-        if (next_jump == 1) :
+        if next_jump == 1) :
             if ((phys1 - pos)**2) < ((phys2 - pos)**2) :
-#                print "return 1"
                 return phys1
             else :
-#                print "return 2"
                 return phys2
 
 
 def usage() :
     print >> sys.stderr, "usage: %s -m map_file [-sgh] [-l lod threshold]" % sys.argv[0]
     print >> sys.stderr, "\t-m, --map\t\tmap file location (MANDATORY)"
-#    print >> sys.stderr, "\t-x, --mapformat:\tformat of map file [decode (default), illumina]"
     print >> sys.stderr, "\t-l, --lod:\t\tset lod threshold, (default = 3)"
     print >> sys.stderr, "\t-s, --simwalk:\t\tparse simwalk output files\t(cannot be used in combination with -g or -a)"
     print >> sys.stderr, "\t-g, --genehunter:\tparse genehunter output files\t(cannot be used in combination with -s or -a)"
@@ -110,7 +98,6 @@ def usage() :
 
 # create tuples of (rsid,phypos,lod score)
 def read_simwalk(c, fname) :
-    #global format
     data = []
     chr_str = "%02d" % c
 
@@ -133,7 +120,6 @@ def read_simwalk(c, fname) :
 
         m = simwalk_rsid.match(line)
         if m :
-            #print line,
             stripped = line.strip()
             if stripped.startswith('rs') :
                 marker = stripped
@@ -145,9 +131,7 @@ def read_simwalk(c, fname) :
             me = marker_map[marker]
             for t in tmp :
                 data.append((marker, me.physical_position, float(t[1])))
-                #print marker,
-                #print me.physical_position,
-                #print t[1]
+
             tmp = []
             
     return data
@@ -192,6 +176,7 @@ def read_genehunter(c, fname, current_pos_sum) :
 
         m = gh_pat.match(line)
         if m :
+            # create a list of markers that genehunter ran on...
             if physical_list == None :
                 physical_list = []
                 for mk in markers :
@@ -230,7 +215,6 @@ def read_all_allegro(c) :
     all_data = []
     f = open(chrdir + os.sep + "param_mpt.%02d" % c)
     for line in f :
-        # create tuples of (rsid,phypos,lod score)
         m = al_pat.match(line)
         if m :
             marker = m.group(5)
@@ -240,7 +224,6 @@ def read_all_allegro(c) :
     return all_data
 
 try:
-    #opts, args = getopt.getopt(sys.argv[1:], "hm:x:l:vsgaf", ["help","map=","mapformat=","lod=","verbose","simwalk","genehunter","allegro","force"])
     opts, args = getopt.getopt(sys.argv[1:], "hm:l:vsgaf", ["help","map=","lod=","verbose","simwalk","genehunter","allegro","force"])
 except getopt.GetoptError, err:
     print >> sys.stderr, str(err)
@@ -265,11 +248,6 @@ for o, a in opts:
         genehunter_flag = True
     elif o in ("-a","--allegro"):
         allegro_flag = True
-#    elif o in ("-x","--mapformat"):
-#        format = a.lower()
-#        if format not in formats :
-#            print >> sys.stderr, "Error: illegal map file format (see -h for details): %s" % format
-#            sys.exit(-1)
     elif o in ("-l","--lod"):
         try :
             PEAK_THRESHOLD = float(a)
@@ -306,12 +284,6 @@ except IOError, err:
 # parse map file
 header = mf.readline()
 num_columns = len(header.split())
-#if (((num_columns == 4 and format != "illumina")) \
-#        or ((num_columns == 8 and format != "decode"))) \
-#        and (force_flag != True):
-#    print >> sys.stderr, "warning: are you sure %s is in %s format?" % (mapfile,format)
-#    print >> sys.stderr, "\tif I'm wrong about this, then rerun with the -f or --force flag to run anyway\n"
-#    sys.exit(-1)
 
 for line in mf :
     data = line.split()
@@ -326,6 +298,9 @@ for line in mf :
 
     if len(rs_id) > 10 :
         print >> sys.stderr, "Warning: %s is longer than 10 characters, so it is ambiguous in simwalk output files which truncates it to 8 characters" % rs_id
+        if not force_flag :
+            print >> sys.stderr, "exiting, to avoid this use the force flag (-f)"
+            sys.exit(-1)
 
     me = map_entry(rs_id, chromosome, phys_pos, probe_id)
 
@@ -408,5 +383,4 @@ for c in sorted(chromosomes) :
             print >> sys.stderr, "pos -> neg (end of chromosome)"
         print "chr%d %s %s %s_%s_%f" % \
             (c, lastnegtopos_phypos, pos, lastnegtopos_marker, marker, peak_value)
-
 
