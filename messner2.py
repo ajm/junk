@@ -402,3 +402,11 @@ for c in sorted(chromosomes) :
             
         last_lod = lod
 
+    # end the peak before we process the next chromosome
+    if peak :
+        if debug :
+            print >> sys.stderr, "pos -> neg (end of chromosome)"
+        print "chr%d %s %s %s_%s_%f" % \
+            (c, lastnegtopos_phypos, pos, lastnegtopos_marker, marker, peak_value)
+
+
