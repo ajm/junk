@@ -4,3 +4,5 @@ Collection of scripts developed to automate of previously manual tasks
     - messner    : retrieve names of SNPs to the left and right of LOD score peaks over a given threshold
     - clodhopper : perform estimate of LOD score using faked data
     - autogrr    : script to automate running GRR
+
+    - zoom, linkage_workflow : random scripts to automate elements of linkage analysis
