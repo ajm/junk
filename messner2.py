@@ -10,7 +10,7 @@ genehunter_flag = False
 simwalk_flag    = False
 allegro_flag    = False
 
-format          = None
+#format          = None
 mapfile         = None
 mode            = "simwalk"
 formats         = ("illumina","decode")
@@ -34,7 +34,7 @@ simwalk_lod = re.compile("^\
 # genehunter
 gh_pat = re.compile("^\s*(\-?\d+\.\d+)\s*(\-?\d+\.\d+)\s*\((\-?\d+\.\d+)\,\ (\-?\d+\.\d+)\)\s*(\-?\d+\.\d+)\s*(\-?\d+\.\d+)\s*(\-?\d+\.\d+)")
 # allegro
-al_line_pat = re.compile("^\s*(\-?\d+\.\d+)\s*(\-?\d+\.\d+)\s*(\-?\d+\.\d+)\s*(\-?\d+\.\d+)\s*(rs\d+)")
+al_pat = re.compile("^\s*(\-?\d+\.\d+)\s*(\-?\d+\.\d+)\s*(\-?\d+\.\d+)\s*(\-?\d+\.\d+)\s*(rs\d+)")
 
 
 class map_entry :
@@ -43,6 +43,58 @@ class map_entry :
         self.chromosome = chromosome
         self.physical_position = phypos
         self.probeid = probeid
+
+# this is a horrible hack, (at least it takes log(n) iterations)
+# the idea is that genehunter positions do not match any physical positions
+# hence we need to find the closest position that contains a valid marker 
+# from the map - annoyingly many markers map to the same positions reported
+# by genehunter (annecdotally, the first 5 positions in a gh file I am working
+# on are all 0.00)
+def find_phys(position_list, pos):
+    pos *= 1e6
+    pos = int(pos)
+
+    #poz = physical_positions[chromosome]
+    poz = position_list
+    index = len(poz) / 2
+    next_jump = index
+
+    while 1 :
+        phys1 = poz[index]
+        next_jump /= 2
+
+        if next_jump < 1 :
+            next_jump = 1
+
+        if pos < phys1 :
+#            print "-"
+            index -= next_jump
+        else :
+#            print "+"
+            index += next_jump
+
+        if index == len(poz) :
+            return poz[-1]#, poz[-1]
+        if index == 0 :
+            return poz[0]#, poz[0]
+
+        try :
+            phys2 = poz[index]
+        except Exception, e:
+            print >> sys.stderr, "i=%d jump=%d poz=%d : %s" % (index, next_jump, len(poz), str(e))
+            sys.exit(-1)
+
+#        print "[%d]\tindex = %d,\tjump = %d,\tpos = %d,\trs = %s" % (pos, index, next_jump, poz[index], physical_map[(chromosome,poz[index])].rs)
+#        print "phy1 = %d, phy2 = %d" % (phys1,phys2)
+
+        if (next_jump == 1) :
+            if ((phys1 - pos)**2) < ((phys2 - pos)**2) :
+#                print "return 1"
+                return phys1
+            else :
+#                print "return 2"
+                return phys2
+
 
 def usage() :
     print >> sys.stderr, "usage: %s -m map_file [-sgh] [-l lod threshold]" % sys.argv[0]
@@ -58,14 +110,14 @@ def usage() :
 
 # create tuples of (rsid,phypos,lod score)
 def read_simwalk(c, fname) :
-    global format
+    #global format
     data = []
     chr_str = "%02d" % c
 
     try :
         f = open(fname)
     except :
-        print >> sys.stderr, "could not open file: %s" % filename
+        print >> sys.stderr, "could not open file: %s" % fname
         sys.exit(-1)
     lines = f.readlines()
     f.close()
@@ -90,23 +142,6 @@ def read_simwalk(c, fname) :
             else :
                 marker = 'rs' + stripped
         
-#        # marker name (a small nightmare, this depends on what alohomora uses...)
-#        if format == 'decode' :
-#            m = simwalk_rsid_decode.match(line)
-#            if m :
-#                marker = "SNP_A" + m.group(1)
-#                marker = marker2rsid[marker]
-#
-#        elif format == 'illumina' :
-#            m = simwalk_rsid_illumina.match(line)
-#            if m :
-#                if m.group(1).startswith('rs') :
-#                    marker = m.group(1)
-#                elif m.group(1).startswith('s') :
-#                    marker = 'r' + m.group(1)
-#                else :
-#                    marker = 'rs' + m.group(1)
-        
             me = marker_map[marker]
             for t in tmp :
                 data.append((marker, me.physical_position, float(t[1])))
@@ -129,12 +164,80 @@ def read_all_simwalk(c) :
 
     return all_data
 
-def read_all_genehunter(dir) :
-    pass
+def read_genehunter(c, fname, current_pos_sum) :
+    data = []
+    chr_str = "%02d" % c
 
-def read_all_allegro(chr) :
-    pass
+    try :
+        f = open(fname)
+    except :
+        print >> sys.stderr, "could not open file: %s" % fname
+        sys.exit(-1)
+    lines = f.readlines()
+    f.close()
 
+    tmp = []
+    markers = []
+    physical_list = None
+
+    for line in lines :
+        if line.startswith("marker rs") :
+            rs = line.strip().split()[1]
+            markers.append(rs)
+            continue
+
+        line.replace("-INFINITY", "-99.99")
+        line.replace("NaN", "-0.5")
+        line.replace("nan", "-0.5")
+
+        m = gh_pat.match(line)
+        if m :
+            if physical_list == None :
+                physical_list = []
+                for mk in markers :
+                    physical_list.append( int(marker_map[mk].physical_position) )
+                physical_list.sort()
+
+            pos,lod = map(float, m.groups()[:2])
+            phys = find_phys(physical_list, current_pos_sum + pos) # find the closest physical position
+            me = physical_map[(chr_str,phys)]       # find the marker at this position
+
+            if me.rs not in markers :
+                print >> sys.stdout, "%s : %s not in possible marker list" % (fname,me.rs)
+
+            data.append((me.rs, me.physical_position, float(lod)))
+
+    return data, current_pos_sum + pos
+
+def read_all_genehunter(c) :
+    chrdir = "c%02d" % c
+    files = glob.glob(chrdir + os.sep + "gh*out")
+    largest = max(map(lambda x : int(x[x.index('_')+1 : x.index('.')]), files))
+    all_data = []
+
+    pos_sum = 0.0
+
+    for i in range(1, largest + 1) :
+        fname = chrdir + os.sep + "gh_%d.out" % (i)
+        tmp,current_sum = read_genehunter(c, fname, pos_sum)
+        all_data += tmp
+        pos_sum = current_sum
+
+    return all_data
+
+def read_all_allegro(c) :
+    chrdir = "c%02d" % c
+    all_data = []
+    f = open(chrdir + os.sep + "param_mpt.%02d" % c)
+    for line in f :
+        # create tuples of (rsid,phypos,lod score)
+        m = al_pat.match(line)
+        if m :
+            marker = m.group(5)
+            me = marker_map[marker]
+            all_data.append((marker, me.physical_position, float(m.group(2))))
+
+    return all_data
 
 try:
     #opts, args = getopt.getopt(sys.argv[1:], "hm:x:l:vsgaf", ["help","map=","mapformat=","lod=","verbose","simwalk","genehunter","allegro","force"])
@@ -228,7 +331,7 @@ for line in mf :
 
     probe_map[probe_id] = me
     marker_map[rs_id] = me
-    physical_map[(chromosome,phys_pos)] = me
+    physical_map[(chromosome,int(phys_pos))] = me
 
     if not physical_positions.has_key(chromosome) :
         physical_positions[chromosome] = []
@@ -236,6 +339,9 @@ for line in mf :
     physical_positions[chromosome].append(int(phys_pos))
     
 mf.close()
+
+if debug :
+    print >> sys.stderr, mapfile + " read in..."
 
 
 # find chromosome directories
@@ -263,12 +369,6 @@ for c in sorted(chromosomes) :
     lastnegtopos_phypos = None
 
     for marker,pos,lod in data :
-#        print marker,
-#        print pos,
-#        print lod
-#
-#        continue
-
         # is this a peak, if the same peak update the score
         if (lod > PEAK_THRESHOLD) and (lod > peak_value) :
             peak_value = lod
