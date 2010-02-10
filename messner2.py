@@ -9,6 +9,7 @@ force_flag      = False
 genehunter_flag = False
 simwalk_flag    = False
 allegro_flag    = False
+extra_markers   = 1
 
 mapfile         = None
 mode            = "simwalk"
@@ -78,12 +79,34 @@ def find_phys(position_list, pos):
             print >> sys.stderr, "i=%d jump=%d poz=%d : %s" % (index, next_jump, len(poz), str(e))
             sys.exit(-1)
 
-        if next_jump == 1) :
+        if next_jump == 1 :
             if ((phys1 - pos)**2) < ((phys2 - pos)**2) :
                 return phys1
             else :
                 return phys2
 
+def offset_marker(start_marker, offset) :
+    me = marker_map[start_marker]
+    c = me.chromosome
+    p = int(me.physical_position)
+    pos = physical_positions[c]
+    try :
+        i = pos.index(p) + offset
+    except :
+        print start_marker
+        print c
+        print p
+        sys.exit(-1)
+
+    if i < 0 :
+        i = 0
+    elif i > (len(pos) - 1) :
+        i = (len(pos) - 1)
+    else :
+        pass
+
+    me2 = physical_map[(c,pos[i])]
+    return me2.rs, me2.physical_position
 
 def usage() :
     print >> sys.stderr, "usage: %s -m map_file [-sgh] [-l lod threshold]" % sys.argv[0]
@@ -114,7 +137,6 @@ def read_simwalk(c, fname) :
         # lod score
         m = simwalk_lod.match(line)
         if m :
-            #print m.groups()
             tmp.append(m.groups())
             continue
 
@@ -184,8 +206,8 @@ def read_genehunter(c, fname, current_pos_sum) :
                 physical_list.sort()
 
             pos,lod = map(float, m.groups()[:2])
-            phys = find_phys(physical_list, current_pos_sum + pos) # find the closest physical position
-            me = physical_map[(chr_str,phys)]       # find the marker at this position
+            phys = find_phys(physical_list, current_pos_sum + pos)  # find the closest physical position
+            me = physical_map[(chr_str,phys)]                       # find the marker at this position
 
             if me.rs not in markers :
                 print >> sys.stdout, "%s : %s not in possible marker list" % (fname,me.rs)
@@ -315,6 +337,7 @@ for line in mf :
     
 mf.close()
 
+
 if debug :
     print >> sys.stderr, mapfile + " read in..."
 
@@ -325,10 +348,8 @@ for chrdir in os.listdir('.') :
     if os.path.isdir(chrdir) and re.match("^c\d\d$", chrdir) :
         chromosomes.append(int(chrdir[1:]))
 
-# for each chromosomes directory... (in order)
+# for each chromosome directory... (in order)
 for c in sorted(chromosomes) :
-    #chrdir = "c%02d" % c
-
     if mode == 'simwalk' :
         data = read_all_simwalk(c)
     elif mode == 'genehunter' :
@@ -370,8 +391,11 @@ for c in sorted(chromosomes) :
 
                 # if we are descending a peak, print the data
                 if peak :
-                    print "chr%d %s %s %s_%s_%f" % \
-                        (c, lastnegtopos_phypos, pos, lastnegtopos_marker, marker, peak_value)
+                    m1,p1 = offset_marker(lastnegtopos_marker,  -extra_markers)
+                    m2,p2 = offset_marker(marker,               extra_markers)
+#                    print "chr%d %s %s %s_%s_%f" % \
+#                        (c, lastnegtopos_phypos, pos, lastnegtopos_marker, marker, peak_value)
+                    print "chr%d %s %s %s_%s_%f" % (c, p1, p2, m1, m2, peak_value)
                     peak = False
                     peak_value = -1
             
@@ -381,6 +405,10 @@ for c in sorted(chromosomes) :
     if peak :
         if debug :
             print >> sys.stderr, "pos -> neg (end of chromosome)"
-        print "chr%d %s %s %s_%s_%f" % \
-            (c, lastnegtopos_phypos, pos, lastnegtopos_marker, marker, peak_value)
+
+        m1,p1 = offset_marker(lastnegtopos_marker,  -extra_markers)
+        m2,p2 = offset_marker(marker,               extra_markers)
+#        print "chr%d %s %s %s_%s_%f" % \
+#            (c, lastnegtopos_phypos, pos, lastnegtopos_marker, marker, peak_value)
+        print "chr%d %s %s %s_%s_%f" % (c, p1, p2, m1, m2, peak_value)
 
