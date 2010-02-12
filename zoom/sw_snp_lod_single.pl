@@ -157,7 +157,7 @@ sub pr_batch {
 	foreach (keys %chrlabel) {print out5 "set label \"$_\" at $chrlabel{$_}\,$ypos\n";}
 	print out5 "set size 1,0.5\n";
 	print out5 "set terminal postscript color\n";
-	print out5 "set output \"sw_snp_lod_$ARGV[0].ps\"\n";
+	print out5 "set output \"sw_snp_lod_chr$ARGV[0].ps\"\n";
 	print out5 "plot \[$xmin\:$xsum\] \[$ymin\:$ymax\]  \'lod.plt\' with lines, \'chr_line\' with lines\n";
 #	print out5 "set terminal x11\n";
 #	print out5 "plot \[$xmin\:$xsum\] \[$ymin\:$ymax\]  \'lod.plt\' with lines, \'chr_line\' with lines\n";

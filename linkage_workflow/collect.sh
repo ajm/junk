@@ -3,6 +3,9 @@
 destdir=$1
 mkdir -p $destdir/{preprocessing,pedigrees,grr,allegro,genehunter}
 
+# notes
+cp README.txt $destdir/
+
 # pedigrees
 cp family*pdf *elod.txt $destdir/pedigrees
 # preprocessing
@@ -18,6 +21,18 @@ for i in `ls allegro/allegro_lod*ps`; do
 	echo Converting $i to allegro/${out}pdf
 	ps2pdf $i allegro/${out}pdf
 done
+for i in `cut -f1 pedfile.pro | uniq`; do
+	if [[ -d allegro-family$i ]] ; then
+		mkdir $destdir/allegro/allegro-family$i
+		for j in `ls allegro-family$i/allegro_lod*ps`; do
+			out=`basename $j ps`
+			echo Converting $j to allegro-family$i/${out}pdf
+			ps2pdf allegro-family$i/${out}pdf
+		done
+		cp allegro-family$i/${out}pdf $destdir/allegro/allegro-family$i/
+	fi
+done
+
 cp allegro/allegro_lod*pdf allegro/messner*txt $destdir/allegro
 # genehunter
 for i in `ls gh_200/gh_snp_lod*ps`; do 
@@ -29,6 +44,7 @@ cp gh_200/gh_snp_lod*pdf gh_200/messner*txt $destdir/genehunter
 
 # convert for windows
 unix2dos $destdir/*/*txt
+unix2dos $destdir/*txt
 
 clear
 echo

@@ -178,7 +178,7 @@ sub pr_batch {
 	print out5 "set size 1,0.6\n";
 	print out5 "set terminal postscript color\n";
 #	if ($mod==0){print out5 "set output \"gh_snp_lod.ps\"\n";}
-    if ($mod==0){print out5 "set output \"gh_snp_lod_${ARGV[0]}.ps\"\n";}
+    if ($mod==0){print out5 "set output \"gh_snp_lod_chr$ARGV[0].ps\"\n";}
 	else {print out5 "set output \"gh_snp_lod_mod.ps\"\n";}
 	print out5 "plot \[$xmin\:$xsum\] \[$ymin\:$ymax\]  \'lod.plt\' with lines, \'chr_line\' with lines\n";
 #	print out5 "set terminal x11\n";

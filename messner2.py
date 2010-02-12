@@ -60,8 +60,8 @@ def find_phys(position_list, pos):
         phys1 = poz[index]
         next_jump /= 2
 
-#        if next_jump < 1 :
-#            next_jump = 1
+        if next_jump < 1 :
+            next_jump = 1
 
         if pos < phys1 :
             index -= next_jump
@@ -350,6 +350,7 @@ for chrdir in os.listdir('.') :
 
 # for each chromosome directory... (in order)
 for c in sorted(chromosomes) :
+    print c
     if mode == 'simwalk' :
         data = read_all_simwalk(c)
     elif mode == 'genehunter' :
