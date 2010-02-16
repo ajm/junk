@@ -12,7 +12,8 @@ cp family*pdf *elod.txt $destdir/pedigrees
 for i in `ls genotypes*ps`; do 
 	ps2pdf $i
 done
-cp gendercheck.txt genotypes*pdf unlikely.all $destdir/preprocessing
+cp gendercheck.txt genotypes*pdf $destdir/preprocessing
+cp unlikely.all $destdir/preprocessing/unlikely_genotypes.txt
 # grr
 cp grr_info*txt grr_screenshot*png $destdir/grr
 # allegro
