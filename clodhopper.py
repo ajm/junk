@@ -14,19 +14,31 @@ def rewrite_pedin(oldfilename, newfilename) :
 
     # find affected individuals + remember their parents
     # so later we will know who is the sibling of an affected
-    affecteds = {}
+    affected_indiv = {}
+    genotyped_indiv = {}
     for line in lines :
         data = line.strip().split()
         affected = int(data[5]) == 2
 
         if affected :
-            affecteds[data[1]] = (data[2], data[3]) # affecteds[ child ] = ( mother, father )
+            affected_indiv[data[1]] = (data[2], data[3]) # affected_indiv[ child ] = ( mother, father )
+
+        genotyped_indiv[data[1]] = not ((len(set(data[6:])) == 1) and (data[6] == '0'))
+#        if (len(set(data[6:])) == 1) and (data[6] == '0') :
+#            print data[1] + " is not genotyped..."
 
     # rewrite pedin
     g = open(newfilename, 'w')
     for line in lines :
         data = line.strip().split()
         affected = int(data[5]) == 2
+
+        # ids, status, etc
+        print >> g, ' '.join(data[:6]),
+
+        if not genotyped_indiv[data[1]] :
+            print >> g, ' '.join(data[6:])
+            continue
 
         i = len(data[6:])
         if (i % 2) != 0 :
@@ -39,11 +51,8 @@ def rewrite_pedin(oldfilename, newfilename) :
 
         splice = (i / 2) - homozygous_length
 
-        # ids, status, etc
-        print >> g, ' '.join(data[:6]),
-
         if not affected :
-            if ( data[2], data[3] ) in affecteds.values() :
+            if ( data[2], data[3] ) in affected_indiv.values() :
                 aff = hetero[:splice] + homo2 + hetero[-splice:]
                 print >> g, ' '.join(aff)
             else :
