@@ -14,6 +14,12 @@ for i in `ls genotypes*ps`; do
 done
 cp gendercheck.txt genotypes*pdf $destdir/preprocessing
 cp unlikely.all $destdir/preprocessing/unlikely_genotypes.txt
+for i in `ls merlin/*ps` ; do
+	out=`basename $i ps`
+	echo Converting $i to merlin/${out}pdf
+	ps2pdf $i merlin/${out}pdf
+	cp merlin/${out}pdf $destdir/preprocessing/${out}pdf
+done
 # grr
 cp grr_info*txt grr_screenshot*png $destdir/grr
 # allegro
@@ -28,7 +34,7 @@ for i in `cut -f1 pedfile.pro | uniq`; do
 		for j in `ls allegro-family$i/allegro_lod*ps`; do
 			out=`basename $j ps`
 			echo Converting $j to allegro-family$i/${out}pdf
-			ps2pdf allegro-family$i/${out}pdf
+			ps2pdf $j allegro-family$i/${out}pdf
 		done
 		cp allegro-family$i/${out}pdf $destdir/allegro/allegro-family$i/
 	fi
