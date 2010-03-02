@@ -351,7 +351,7 @@ for chrdir in os.listdir('.') :
 
 # for each chromosome directory... (in order)
 for c in sorted(chromosomes) :
-    print c
+#    print c
     if mode == 'simwalk' :
         data = read_all_simwalk(c)
     elif mode == 'genehunter' :
