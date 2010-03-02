@@ -182,6 +182,7 @@ def read_genehunter(c, fname, current_pos_sum) :
     lines = f.readlines()
     f.close()
 
+    pos = 0
     tmp = []
     markers = []
     physical_list = None
