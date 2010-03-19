@@ -5,4 +5,4 @@ Collection of scripts developed to automate of previously manual tasks
     - clodhopper : perform estimate of LOD score using faked data
     - autogrr    : script to automate running GRR
 
-    - zoom, linkage_workflow : random scripts to automate elements of linkage analysis
+    - linkage_workflow : random scripts to automate elements of linkage analysis
