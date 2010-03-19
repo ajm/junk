@@ -8,12 +8,12 @@ $other_map_illumi="./map.txt";
 $allfreq="Caucasian";
 $freq_cauc_illumi="./maf.txt";
 
+$skip_nopos=1;
 $del_errors=0;
 &ReadInfiles;
 
 &CompareSampleIDs;
 &CheckGender;
-#&PrintGRRFile;
 
 &PedCheck;
 &PlotPedCheckErr;
@@ -27,8 +27,5 @@ system("merlin_start.pl");
 chdir("..");
 &CreMerlinErrList;
 
-#$skip_notinf=0
-#$del_unlikely=1;
-#&Allegro;
 
 

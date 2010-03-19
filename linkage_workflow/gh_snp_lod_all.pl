@@ -48,8 +48,8 @@ my %chrlabel=();
 #######################################    M A I N   #############################															
 open (out4,">$pfad/lod.plt") || die "could not open lod.plt :$!\n";
 
-foreach my $dir ("c$ARGV[0]") {
-#foreach my $dir (c01,c02,c03,c04,c05,c06,c07,c08,c09,c10,c11,c12,c13,c14,c15,c16,c17,c18,c19,c20,c21,c22,c23,cx,c24,cxy) {
+#foreach my $dir (c06) {
+foreach my $dir (c01,c02,c03,c04,c05,c06,c07,c08,c09,c10,c11,c12,c13,c14,c15,c16,c17,c18,c19,c20,c21,c22,c23,cx,c24,cxy) {
 	if (-d $dir) {
 		$gh_tsh=0;	# is there a total stat het for this chrom
 		foreach my $i ( 1..1000000) {
@@ -170,15 +170,14 @@ sub pr_batch {
 	print out5 "set autoscale\n";
 	print out5 "set nokey\n";
 	if ($tit==1) {print out5 "set title \"$titel\\n\"\n";}
-	print out5 "set xlabel \"cM\"\n";
-	print out5 "set ylabel \"LODscore\"\n";
+	print out5 "set xlabel \"MB\"\n";
+	print out5 "set ylabel \"LOD\"\n";
 	my $ypos = $ymax + (($ymax-$ymin)/14);
 	
-	foreach (keys %chrlabel) {print out5 "set label \"$_\" at $chrlabel{$_}\,$ypos\n";}
+	foreach (keys %chrlabel) {print out5 "set label \"$_\" at $chrlabel{$_}\,$ypos font \"Ariel,8\"\n";}
 	print out5 "set size 1,0.6\n";
 	print out5 "set terminal postscript color\n";
-#	if ($mod==0){print out5 "set output \"gh_snp_lod.ps\"\n";}
-    if ($mod==0){print out5 "set output \"gh_snp_lod_chr$ARGV[0].ps\"\n";}
+	if ($mod==0){print out5 "set output \"gh_snp_lod.ps\"\n";}
 	else {print out5 "set output \"gh_snp_lod_mod.ps\"\n";}
 	print out5 "plot \[$xmin\:$xsum\] \[$ymin\:$ymax\]  \'lod.plt\' with lines, \'chr_line\' with lines\n";
 #	print out5 "set terminal x11\n";

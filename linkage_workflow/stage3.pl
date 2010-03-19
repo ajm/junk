@@ -8,11 +8,14 @@ $other_map_illumi="./map.txt";
 $allfreq="Caucasian";
 $freq_cauc_illumi="./maf.txt";
 
+$skip_nopos=1;
+$skip_errors=1;
+
 &ReadInfiles;
 &CompareSampleIDs;
 &CheckGender;
 
-$skip_notinf=0
+$skip_notinf=0;
 $del_errors=1;
 $del_unlikely=1;
 &Allegro;

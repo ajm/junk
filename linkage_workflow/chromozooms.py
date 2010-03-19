@@ -33,13 +33,13 @@ for c in chromosomes :
     chromo = "%02d" % c 
     if program == 'allegro' :
         os.system("allegro_lod_single.pl %s" % chromo)
-        os.system("ps2pdf allegro_lod_%s.ps" % chromo)
+        os.system("ps2pdf allegro_lod_chr%s.ps" % chromo)
 
     elif program == 'genehunter' :
         os.system("gh_snp_lod_single.pl %s" % chromo)
-        os.system("ps2pdf gh_snp_lod_%s.ps" % chromo)
+        os.system("ps2pdf gh_snp_lod_chr%s.ps" % chromo)
 
     elif program == 'simwalk2' :
         os.system("sw_snp_lod_single.pl %s" % chromo)
-        os.system("ps2pdf sw_snp_lod_%s.ps" % chromo)
+        os.system("ps2pdf sw_snp_lod_chr%s.ps" % chromo)
 

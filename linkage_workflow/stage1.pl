@@ -8,6 +8,7 @@ $other_map_illumi="./map.txt";
 $allfreq="Caucasian";
 $freq_cauc_illumi="./maf.txt";
 
+$skip_nopos=1;
 $del_errors=0;
 &ReadInfiles;
 
