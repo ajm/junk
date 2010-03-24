@@ -15,6 +15,8 @@ mapfile         = None
 mode            = "simwalk"
 formats         = ("illumina","decode")
 PEAK_THRESHOLD  = 3.0
+LOWER_THRESHOLD = 2.0
+THRESHOLD_DIFFERENCE = 1.0
 
 probe_map           = {}
 marker_map          = {}
@@ -182,7 +184,6 @@ def read_genehunter(c, fname, current_pos_sum) :
     lines = f.readlines()
     f.close()
 
-    pos = 0
     tmp = []
     markers = []
     physical_list = None
@@ -274,6 +275,7 @@ for o, a in opts:
     elif o in ("-l","--lod"):
         try :
             PEAK_THRESHOLD = float(a)
+	    LOWER_THRESHOLD = PEAK_THRESHOLD - THRESHOLD_DIFFERENCE
 
         except :
             print >> sys.stderr, "Error: lod score must be a number"
@@ -351,7 +353,7 @@ for chrdir in os.listdir('.') :
 
 # for each chromosome directory... (in order)
 for c in sorted(chromosomes) :
-#    print c
+    #print c
     if mode == 'simwalk' :
         data = read_all_simwalk(c)
     elif mode == 'genehunter' :
@@ -360,7 +362,7 @@ for c in sorted(chromosomes) :
         data = read_all_allegro(c)
 
     peak = False
-    last_lod = 0
+    last_lod = -3
     look_for_neg_to_pos = True
     peak_value = -1
     lastnegtopos_marker = None
@@ -376,7 +378,7 @@ for c in sorted(chromosomes) :
         
         # do the LOD scores go from neg -> pos?
         if look_for_neg_to_pos :
-            if lod >= 0 and last_lod <= 0 :
+            if lod >= LOWER_THRESHOLD and last_lod <= LOWER_THRESHOLD :
                 lastnegtopos_marker = marker
                 lastnegtopos_phypos = pos
                 look_for_neg_to_pos = False
@@ -385,11 +387,11 @@ for c in sorted(chromosomes) :
                     print >> sys.stderr, "neg -> pos (%f --> %f)" % (last_lod, lod)
         # else do they go from pos -> neg? (this is to record crossing the x-axis)
         else :
-            if last_lod >= 0 and lod <= 0 :
+            if last_lod >= LOWER_THRESHOLD and lod <= LOWER_THRESHOLD :
                 look_for_neg_to_pos = True
 
                 if debug :
-                    print >> sys.stderr, "pos -> neg (%f --> %f)" % (last,lod)
+                    print >> sys.stderr, "pos -> neg (%f --> %f)" % (last_lod,lod)
 
                 # if we are descending a peak, print the data
                 if peak :

@@ -1,0 +1,82 @@
+--- /home/ajm/bioinf/alohomora_M_v0.31/alohomora.orig	2010-02-03 15:16:10.000000000 +0000
++++ /usr/local/bin/alohomora.pl	2010-03-24 14:50:22.000000000 +0000
+@@ -1471,6 +1471,7 @@
+ 		else {print fhfrq "F 0.500 0.500\n";}	# allele frequencies
+ 		$c++;
+ 	}
++
+ 	print fhdat "E  END-OF-DATA\n";
+ 	for (my $i=1;$i<=$count;$i++) {
+ 		if ($merlin_all_trait eq "noTrait") { print fhout "$pedcheck[$i] "; }
+@@ -1496,6 +1497,8 @@
+ 	}
+ 	print "Check gender";
+ 	ShowOutput("\nCheck gender of individuals\n");
++
++	open (gcout,"> gendercheck.txt") || die "could not open gendercheck.txt :$!\n";
+ 	
+ 	my $var=0;
+ 	my $sex="";
+@@ -1524,18 +1527,31 @@
+ 	ShowOutput("\nCount heterozygote genotypes on X-chromosome\n\n");
+ 	ShowOutput("Sample\t\tCounts\n");
+ 	ShowOutput("pid ----- het ----- % - genotyped ---- sex ---------\n");
++	print gcout "pid ----- het ----- % - genotyped ---- sex ---------\n";
+ 	foreach my $key (sort {$a<=>$b} keys %allgtps) {
+ 		if (! $hetero{$key}) {$var=0.0}
+ 		else {$var=$hetero{$key}/$allgtps{$key}*100;}
+ 		$var=sprintf("%4.1f",$var);
+ 		if ($var > 7) {$sex = "Female";} else {$sex="Male";}
+ 		ShowOutput("$key:\t$hetero{$key}\t$var\t$allgtps{$key}\t$sex");
+-		if (($gender{$key} ==1) && ($sex eq "Female")) {ShowOutput("\t### Male in pedfile!!!\n");}
+-		elsif (($gender{$key} ==2) && ($sex eq "Male")) {ShowOutput("\t### Female in pedfile!!!\n");}
+-		else {ShowOutput("\n");}
++		print gcout "$key:\t$hetero{$key}\t$var\t$allgtps{$key}\t$sex";
++		if (($gender{$key} ==1) && ($sex eq "Female")) {
++			ShowOutput("\t### Male in pedfile!!!\n");
++			print gcout "\t### Male in pedfile!!!\n";
++		}
++		elsif (($gender{$key} ==2) && ($sex eq "Male")) {
++			ShowOutput("\t### Female in pedfile!!!\n");
++			print gcout "\t### Female in pedfile!!!\n";
++		}
++		else {
++			ShowOutput("\n");
++			print gcout "\n";
++		}
+ 
+ 	}
+ 
++	close(gcout);
++
+ 	ShowOutput("\nX-linked marker heterozygote in male:\n");
+ 	foreach my $marker (keys %het_snp){
+ 		ShowOutput("\t$marker\t$het_snp{$marker}\n");
+@@ -1945,12 +1961,18 @@
+ 	if ($status_markerlist == 1) { @markermap=@markerlist;}
+ 	else {@markermap=@koord;}
+ 
++	open(uninform, "> uninformative_markers.track") || die "could not open uninformative_markers.track : $!\n";
++	print uninform "track name='uninformative markers', description='uninformative markers'\n";
++
+ LINE4: foreach (@markermap) {			# for each SNP in genetic map
+ 		my @row=split('\t',$_);
+ 		my ($chrom,$marker,$genpos,$phypos,@rest) = @row;
+ 
+ 		if ($skip_notinf eq "1") {		# Skip not informative SNPs
+-			if ($allhomoz{$marker}) {next LINE4;}
++			if ($allhomoz{$marker}) {
++				print uninform "chr$chrom\t$phypos\t$phypos\t$marker\n";
++				next LINE4;
++			}
+ 		}
+ 
+ 		if ($chrom eq "") {next LINE4;}
+@@ -2003,6 +2025,7 @@
+ 			}
+ 		}
+ 	}
++	close(uninform);
+ 	&PrintNoLimitFiles;
+ 	ShowOutput("$all_markers SNPs are used on all chromosomes\n");
+ 	ShowOutput("Linkage files created\n\n");
