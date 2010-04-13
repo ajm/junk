@@ -150,8 +150,8 @@ sub pr_batch {
 	open (out5,"> swlod.gp") || die "could not open swlod.gp :$!\n";
 
 	print out5 "set autoscale\n";
-	print out5 "set nokey\n"
-	print out5 "set title \"$titel\\n\"\n" ;
+	print out5 "set nokey\n";
+	print out5 "set title \"$titel\"\n" ;
 	print out5 "set xlabel \"MB\"\n";
 	print out5 "set ylabel \"LOD\"\n";
 	my $ypos = $ymax + (($ymax-$ymin)/14);
