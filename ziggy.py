@@ -38,7 +38,7 @@ for o, a in opts:
         usage()
         sys.exit()
     elif o in ("-l", "--lod"):
-        lod = a
+        lod = float(a)
     elif o in ("-g", "--genehunter"):
         program_arg = o
     elif o in ("-a", "--allegro"):
@@ -54,9 +54,16 @@ for o, a in opts:
 
 
 # map
+print >> sys.stderr, "reading map file..."
 markers = []
 marker_index = {}
-f = open(mapfilename)
+try :
+    f = open(mapfilename)
+except IOError, e :
+    print >> sys.stderr, "%s" % str(e)
+    print >> sys.stderr, "you probably need to specify the map file with the -m flag...\n"
+    sys.exit(-1)
+
 f.readline() # header
 linenum = 0
 for line in f :
@@ -69,11 +76,21 @@ for line in f :
 f.close()
 
 # ped
+print >> sys.stderr, "reading pedigree file..."
 affection = {}
-f = open(pedfilename)
+try :
+    f = open(pedfilename)
+except IOError, e :
+    print >> sys.stderr, "%s" % str(e)
+    print >> sys.stderr, "you probably need to specify the pedigree file with the -p flag...\n"
+    sys.exit(-1)
+
 f.readline()
 for line in f :
-    data = line.strip().split()
+    line = line.strip()
+    if len(line) == 0 :
+        continue
+    data = line.split()
     fam,pid,pat,mat,sex,aff = data
     if int(aff) == 1 :
         affection[int(pid)] = True
@@ -82,16 +99,26 @@ for line in f :
 f.close()
 
 # geno
+print >> sys.stderr, "reading genotype file..."
 genotypes = {}
-f = open(genotypefile)
+try :
+    f = open(genotypefilename)
+except IOError, e :
+    print >> sys.stderr, "%s" % str(e)
+    print >> sys.stderr, "you probably need to specify the genotypes file with the -x flag...\n"
+    sys.exit(-1)
+
 header = f.readline()
 patients = header.strip().split()[1:]
 for line in f :
     # rsid, patient1, patient2...
-    data = line.strip().split()
+    line = line.strip()
+    if len(line) == 0 :
+        continue
+    data = line.split()
     m = data[0]
     g = data[1:]
-
+    
     genotypes[m] = {}
     genotypes[m][True] = set()
     genotypes[m][False] = set()
@@ -100,21 +127,36 @@ for line in f :
         if current == 'NC':
             continue
         current = ''.join(sorted(g[i]))
+        if patients[i] not in affection :
+            continue
         
         genotypes[m][ affection[patients[i]] ].add( current )
 
 f.close()
 
-o,s = commands.getstatusoutput("messner2 -m ../map.txt -l %f %s" % (lod, program_arg))
+print >> sys.stderr, "running messner..."
+program_name = "python /home/ajm/code/bioinformatics-tools/messner2.py"
+#program_name = "messner2"
+s,o = commands.getstatusoutput("%s -m %s -l %f %s" % (program_name, mapfilename, lod, program_arg))
 
+print >> sys.stderr, "looking for homozygosity..."
 for line in o.split('\n') :
-    data = line.strip().split()
+    line = line.strip()
+    if len(line) == 0 :
+        continue
+    data = line.split()
     chr,start,stop,guff = data
     m1,m2,lodscore = guff.split('_')
 
+    print line,
+    peak_start = marker_index[m1]
+    peak_end   = marker_index[m2]
+
     # do stuff...
     start_point = -1
-    for i in range(marker_index[m1], marker_index[m2]) :
+    for i in range(peak_start, peak_end) :
+        if markers[i] not in genotypes : # ie: this marker was removed by pedcheck or something...
+            continue
         affected_g = genotypes[markers[i]][True]
         if (len(affected_g) == 1) and (affected_g[0] == 'AA' or affected_g[0] == 'BB') :
             start_point = i
@@ -122,7 +164,8 @@ for line in o.split('\n') :
             break
 
     if start_point == -1 :
-        print "no homozygosity"
+#        print line,
+        print ": no homozygosity"
         continue
 
     # go as far left as possible
@@ -145,7 +188,8 @@ for line in o.split('\n') :
 
     homoz_end = markers[next - 1]
 
-    print line,
+#    print line,
     print homoz_start,
+    print "--",
     print homoz_end
 
