@@ -32,6 +32,8 @@ program_arg = '-a'
 mapfilename = "../map.txt"
 pedfilename = "../pedfile.pro"
 genotypefilename = "../genotypes"
+debug = False
+debug = True
 
 for o, a in opts:
     if o in ("-h", "--help"):
@@ -153,43 +155,71 @@ for line in o.split('\n') :
     peak_end   = marker_index[m2]
 
     # do stuff...
-    start_point = -1
-    for i in range(peak_start, peak_end) :
-        if markers[i] not in genotypes : # ie: this marker was removed by pedcheck or something...
-            continue
-        affected_g = genotypes[markers[i]][True]
-        if (len(affected_g) == 1) and (affected_g[0] == 'AA' or affected_g[0] == 'BB') :
-            start_point = i
-            hmode = affected_g[0]
+    while True :
+        if debug :
+            print ""
+
+        start_point = -1
+        for i in range(peak_start, peak_end) :
+            if markers[i] not in genotypes : # ie: this marker was removed by pedcheck or something...
+                if debug :
+                    print "\t%s not found" % (markers[i])
+                continue
+            affected_g = genotypes[markers[i]][True]
+            if (len(affected_g) == 1) and (affected_g[0] == 'AA' or affected_g[0] == 'BB') :
+                if affected_g[0] not in genotypes[markers[i]][False] :
+                    if debug :
+                        print "\t%s homozygous in affected only" % markers[i]
+                    peak_start = start_point = i
+                    hmode = affected_g[0]
+                    break
+                else :
+                    if debug :
+                        print "\t%s homozygous, but not just in affected" % markers[i]
+            else :
+                if debug :
+                    print "\t%s not homozygous in affected" % markers[i]
+
+        if start_point == -1 :
+#            print line,
+            print ": no homozygosity"
             break
 
-    if start_point == -1 :
+        # go as far left as possible
+        next = start_point - 1
+        while True :
+            if next < 0 :
+                break
+            g_aff = genotypes[next][True]
+            g_non = genotypes[next][False]
+            if (len(g_aff) == 1) and (g_aff[0] == hmode) and (hmode not in g_non) :
+                next -= 1
+            else :
+                break
+
+        homoz_start = markers[next + 1]
+
+        next = start_point + 1
+        # go as far right...
+        while True :
+            if next > len(markers) :
+                break
+            g_aff = genotypes[next][True]
+            g_non = genotypes[next][False]
+            if (len(g_aff) == 1) and (g_aff[0] == hmode) and (hmode not in g_non) :
+                next += 1
+            else :
+                break
+
+        homoz_end = markers[next - 1]
+
 #        print line,
-        print ": no homozygosity"
-        continue
+        print homoz_start,
+        print "--",
+        print homoz_end
 
-    # go as far left as possible
-    next = start_point - 1
-    while 1 :
-        if (next >= 0) and (len(affected_g) == 1) and (affected_g[0] == hmode) :
-            next -= 1
-        else :
-            break
+    if debug :
+        print ""
 
-    homoz_start = markers[next + 1]
-
-    next = start_point + 1
-    # go as far right...
-    while 1 :
-        if (next < len(markers)) and (len(affected_g) == 1) and (affected_g[0] == hmode) :
-            next += 1
-        else :
-            break
-
-    homoz_end = markers[next - 1]
-
-#    print line,
-    print homoz_start,
-    print "--",
-    print homoz_end
+    sys.exit()
 
