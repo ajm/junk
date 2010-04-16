@@ -59,7 +59,7 @@ for o, a in opts:
 
 # map
 print >> sys.stderr, "reading map file..."
-markers = []
+markers = {}
 marker_index = {}
 try :
     f = open(mapfilename)
@@ -72,10 +72,21 @@ f.readline() # header
 linenum = 0
 for line in f :
     data = line.strip().split()
-    rsid = data[1]
+    chr,rsid = data[:2]
 
-    markers.append(rsid)
-    marker_index[rsid] = linenum
+    try :
+        chr = int(chr)
+    except :
+        pass # ie: X, XY, Y
+
+    if chr not in markers :
+        markers[chr] = []
+        marker_index[chr] = {}
+        linenum = 0
+
+    markers[chr].append(rsid)
+    marker_index[chr][rsid] = linenum
+
     linenum += 1
 f.close()
 
@@ -150,6 +161,9 @@ s,o = commands.getstatusoutput("%s -m %s -l %f %s" % (program_name, mapfilename,
 #print o
 #print "\n"
 
+current_markers = None
+current_marker_index = None
+
 print >> sys.stderr, "looking for homozygosity..."
 for line in o.split('\n') :
     line = line.strip()
@@ -159,9 +173,17 @@ for line in o.split('\n') :
     chr,start,stop,guff = data
     m1,m2,lodscore = guff.split('_')
 
+    chr = chr[3:]
+    try :
+        chr = int(chr)
+    except :
+        pass
+    current_markers = markers[chr]
+    current_marker_index = marker_index[chr]
+
     print line
-    peak_start = marker_index[m1]
-    peak_end   = marker_index[m2]
+    peak_start = current_marker_index[m1]
+    peak_end   = current_marker_index[m2]
 
     # do stuff...
     while True :
@@ -176,27 +198,27 @@ for line in o.split('\n') :
 
         start_point = -1
         for i in range(peak_start, peak_end) :
-            if markers[i] not in genotypes : # ie: this marker was removed by pedcheck or something...
+            if current_markers[i] not in genotypes : # ie: this marker was removed by pedcheck or something...
                 if debug :
-                    print "\t[ignore] %s not found" % (markers[i])
+                    print "\t[ignore] %s not found" % (current_markers[i])
                 continue
-            affected_g = genotypes[markers[i]][True]
+            affected_g = genotypes[current_markers[i]][True]
             if (len(affected_g) == 1) and (('AA' in affected_g) or ('BB' in affected_g)) :
-                if list(affected_g)[0] not in genotypes[markers[i]][False] :
+                if list(affected_g)[0] not in genotypes[current_markers[i]][False] :
                     if debug :
                         print "\t[bingo ] %s homozygous in affected only (%s , %s)" \
-                                % (markers[i], str(tuple(affected_g)), str(tuple(genotypes[markers[i]][False])))
+                                % (current_markers[i], str(tuple(affected_g)), str(tuple(genotypes[current_markers[i]][False])))
                     peak_start = start_point = i
                     hmode = list(affected_g)[0]
                     break
                 else :
                     if debug :
                         print "\t[ skip ] %s homozygous, but not just in affected (%s , %s)" \
-                                % (markers[i], str(tuple(affected_g)), str(tuple(genotypes[markers[i]][False])))
+                                % (current_markers[i], str(tuple(affected_g)), str(tuple(genotypes[current_markers[i]][False])))
             else :
                 if debug :
                     print "\t[ skip ] %s not homozygous in affected (%s , %s)" \
-                            % (markers[i], str(tuple(affected_g)), str(tuple(genotypes[markers[i]][False])))
+                            % (current_markers[i], str(tuple(affected_g)), str(tuple(genotypes[current_markers[i]][False])))
 
         if start_point == -1 :
 #            print line,
@@ -209,45 +231,45 @@ for line in o.split('\n') :
             next -= 1
             if next < 0 :
                 break
-            if markers[next] not in genotypes :
+            if current_markers[next] not in genotypes :
                 if debug :
-                    print "\t[ignore] %s not found" % (markers[next])
+                    print "\t[ignore] %s not found" % (current_markers[next])
                 continue
-            g_aff = list(genotypes[markers[next]][True])
-            g_non = list(genotypes[markers[next]][False])
+            g_aff = list(genotypes[current_markers[next]][True])
+            g_non = list(genotypes[current_markers[next]][False])
             if (len(g_aff) == 1) and (g_aff[0] == hmode) and (hmode not in g_non) :
                 if debug :
-                    print "\t[homoz ] %s ( <-- )" % markers[next]
+                    print "\t[homoz ] %s ( <-- )" % current_markers[next]
                 #next -= 1
             else :
                 if debug :
                     print "\t[ end  ] ( <-- )"
                 break
 
-        homoz_start = markers[next + 1]
+        homoz_start = current_markers[next + 1]
 
         next = start_point
         # go as far right...
         while True :
             next += 1
-            if next > len(markers) :
+            if next > len(current_markers) :
                 break
-            if markers[next] not in genotypes :
+            if current_markers[next] not in genotypes :
                 if debug :
-                    print "\t[ignore] %s not found" % (markers[next])
+                    print "\t[ignore] %s not found" % (current_markers[next])
                 continue
-            g_aff = list(genotypes[markers[next]][True])
-            g_non = list(genotypes[markers[next]][False])
+            g_aff = list(genotypes[current_markers[next]][True])
+            g_non = list(genotypes[current_markers[next]][False])
             if (len(g_aff) == 1) and (g_aff[0] == hmode) and (hmode not in g_non) :
                 if debug :
-                    print "\t[homoz ] %s ( --> )" % markers[next]
+                    print "\t[homoz ] %s ( --> )" % current_markers[next]
                 #next += 1
             else :
                 if debug :
                     print "\t[ end  ] ( --> )"
                 break
 
-        homoz_end = markers[next - 1]
+        homoz_end = current_markers[next - 1]
 
 #        print line,
         print "(",
@@ -264,3 +286,4 @@ for line in o.split('\n') :
 #    sys.exit()
 if debug :
     print "done"
+
