@@ -34,6 +34,7 @@ mapfilename = "../map.txt"
 pedfilename = "../pedfile.pro"
 genotypefilename = "../genotypes"
 debug = False
+report_threshold = 2
 
 for o, a in opts:
     if o in ("-h", "--help"):
@@ -61,6 +62,7 @@ for o, a in opts:
 print >> sys.stderr, "reading map file..."
 markers = {}
 marker_index = {}
+physical_positions = {}
 try :
     f = open(mapfilename)
 except IOError, e :
@@ -86,6 +88,8 @@ for line in f :
 
     markers[chr].append(rsid)
     marker_index[chr][rsid] = linenum
+
+    physical_positions[rsid] = int(data[3])
 
     linenum += 1
 f.close()
@@ -165,6 +169,8 @@ current_markers = None
 current_marker_index = None
 
 print >> sys.stderr, "looking for homozygosity..."
+
+print "track name='ziggy' description='ziggy'"
 for line in o.split('\n') :
     line = line.strip()
     if len(line) == 0 :
@@ -181,7 +187,7 @@ for line in o.split('\n') :
     current_markers = markers[chr]
     current_marker_index = marker_index[chr]
 
-    print line
+    #print line
     peak_start = current_marker_index[m1]
     peak_end   = current_marker_index[m2]
 
@@ -272,11 +278,8 @@ for line in o.split('\n') :
         homoz_end = current_markers[next - 1]
 
 #        print line,
-        print "(",
-        print homoz_start,
-        print "-->",
-        print homoz_end,
-        print ")"
+        if current_marker_index[homoz_end] - current_marker_index[homoz_start] >= report_threshold :
+            print "chr%s\t%d\t%d\t%s" % (str(chr), physical_positions[homoz_start], physical_positions[homoz_end], '_'.join([homoz_start, homoz_end, lodscore]))
 
         peak_start = next
 
