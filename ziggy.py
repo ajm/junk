@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys, os, getopt, commands
 # the idea of ziggy is to find the stretches of homozygosity that surround a lod score peak 
-# (where 'peak' is defined by a threshold)
+# (where 'peak' is defined by a threshold given to messner)
 
 def usage() :
     print >> sys.stderr, \
@@ -10,17 +10,20 @@ def usage() :
     -g, --genehunter:    expect genehunter output files
     -a, --allegro:       expect allegro output files
     -s, --simwalk:       expect simwalk output files
-        (only one of -g, -s and -a can be used at once)
+        (only one of -g, -s and -a can be used at once, default: allegro)
     -m, --map:           filename of map file
     -x, --genotypes:     filename of genotype file
     -p, --pedfile:       filename of pedigree file
+    -f, --family:        id of family (default: use all found in pedigree file)
+    -t, --threshold:     minimum stretch of homozygosity (default: 1)
     -h, --help:          show this help info
     -v, --verbose:       be more verbose
 """ % sys.argv[0]
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "hl:gsam:x:p:v", ["help", "lod=", \
-            "genehunter", "simwalk", "allegro", "map=", "genotypes=", "pedfile=", "verbose"])
+    opts, args = getopt.getopt(sys.argv[1:], "hl:gsam:x:p:vt:", ["help", "lod=", \
+            "genehunter", "simwalk", "allegro", "map=", "genotypes=", "pedfile=", \
+            "verbose", "threshold=", "family="])
 
 except getopt.GetoptError, err:
     print >> sys.stderr, str(err) # will print something like "option -a not recognized"
@@ -33,8 +36,9 @@ program_arg = '-a'
 mapfilename = "../map.txt"
 pedfilename = "../pedfile.pro"
 genotypefilename = "../genotypes"
+family = None
+report_threshold = 0
 debug = False
-report_threshold = 2
 
 for o, a in opts:
     if o in ("-h", "--help"):
@@ -56,7 +60,22 @@ for o, a in opts:
         genotypefilename = a
     elif o in ("-v", "--verbose") :
         debug = True
+    elif o in ("-t", "--threshold") :
+        try :
+            report_threshold = int(a) - 1
+        except ValueError, ve :
+            print >> sys.stderr, "%s not an appropriate homozygosity stretch threshold" % a
+            sys.exit(-1)
+        if report_threshold < 0 :
+            print >> sys.stderr, "homozygosity stretch threshold must be at least 1 (you set it to %d)" % (report_threshold + 1)
+            sys.exit(-1)
 
+    elif o in ("-f", "--family") :
+        try :
+            family = int(a)
+        except ValueError, ve :
+            print >> sys.stderr, "%s not an appropriate family id" % a
+            sys.exit(-1)
 
 # map
 print >> sys.stderr, "reading map file..."
@@ -95,7 +114,11 @@ for line in f :
 f.close()
 
 # ped
-print >> sys.stderr, "reading pedigree file..."
+if family == None :
+    print >> sys.stderr, "reading pedigree file..."
+else :
+    print >> sys.stderr, "reading pedigree file for family %d ..." % family
+
 affection = {}
 try :
     f = open(pedfilename)
@@ -111,6 +134,11 @@ for line in f :
         continue
     data = line.split()
     fam,pid,pat,mat,sex,aff = data
+
+    if family != None :
+        if family != int(fam) :
+            continue
+
     if int(aff) == 2 :
         affection[int(pid)] = True
     else :
@@ -158,8 +186,8 @@ f.close()
 #print >> sys.stderr, "\tomitted = %s" % str(omitted)
 
 print >> sys.stderr, "running messner..."
-program_name = "python /home/ajm/code/bioinformatics-tools/messner2.py"
-#program_name = "messner2"
+#program_name = "python /home/ajm/code/bioinformatics-tools/messner2.py"
+program_name = "messner2"
 s,o = commands.getstatusoutput("%s -m %s -l %f %s" % (program_name, mapfilename, lod, program_arg))
 
 #print o
