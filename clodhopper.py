@@ -129,7 +129,8 @@ elif program == 'genehunter' :
         print >> sys.stderr, o
         sys.exit(-1)
 
-    s,o = commands.getstatusoutput("grep \"^\ \ \ \w\" gh_1.out | grep \"(\" | awk \'{ print $2 }\' | sort -nr")
+    #s,o = commands.getstatusoutput("grep \"^\ \ \ \w\" gh_1.out | grep \"(\" | awk \'{ print $2 }\' | sort -nr")
+    s,o = commands.getstatusoutput("grep -E \"\(\" gh_1.out | grep \"\.\" | tail -n +3 | awk '{ printf \"%s\n\", $2 }' | sort -nr")
     print "Genehunter Estimated LOD = %s" % o.split('\n')[0]
 
 elif program == 'simwalk' :
