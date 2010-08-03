@@ -23,5 +23,5 @@ else
 	exit -1
 fi
 
-messner2 -m ../map.txt -l $lflag $aflag > $out
+messner3 -m ../map.txt -l $lflag $aflag > $out
 
