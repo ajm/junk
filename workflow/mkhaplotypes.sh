@@ -8,8 +8,9 @@ fi
 
 chromo=$1
 
-for i in `cut -f1 ../pedfile.pro | uniq` ; do 
-	echo creating haplotype graph for family $i 
+#for i in `cut -f1 ../pedfile.pro | uniq` ; do 
+for i in `awk '{ printf "%s\n", $1 }' ../pedfile.pro | uniq`; do
+	echo creating haplotype graph for chromosome $chromo, family $i
 	HaploPainter1.043.pl -b -pedfile ../pedfile.pro -hapfile c$chromo/ihaplo.out -hapformat allegro -mapfile c$chromo/map.$chromo -mapformat 1 -family $i -paper A0 -outfile haplotypes_chr${chromo}_family-${i}_A0.pdf -outformat pdf 
 done
 

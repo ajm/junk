@@ -1,6 +1,6 @@
 #!/bin/bash
 
-numfamilies=`cut -f1 pedfile.pro | uniq | wc -l`
+numfamilies=`awk '{ printf "%s\n", $1 }' pedfile.pro | sed '/^\W*$/d' | uniq | wc -l`
 if [[ $numfamilies = 1 ]] ; then
 	echo only one family...
 	exit 0
@@ -8,7 +8,7 @@ fi
 
 cd gh_200
 
-for i in `cut -f1 ../pedfile.pro | uniq`; do 
+for i in `awk '{ printf "%s\n", $1 }' ../pedfile.pro | sed '/^\W*$/d' | uniq`; do
 	echo processing family $i
 	
 	rm -rf ../genehunter-family$i

@@ -1,8 +1,2 @@
-Collection of scripts developed to automate of previously manual tasks
+Here be dragons...
 
-    - herzog     : concurrently runs N simwalk instances on an N-core machine
-    - messner    : retrieve names of SNPs to the left and right of LOD score peaks over a given threshold
-    - clodhopper : perform estimate of LOD score using faked data
-    - autogrr    : script to automate running GRR
-
-    - linkage_workflow : random scripts to automate elements of linkage analysis

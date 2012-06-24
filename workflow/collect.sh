@@ -7,10 +7,13 @@ if [[ $# != 1 ]] ; then
 fi
 
 destdir=$1
-mkdir -p $destdir/{preprocessing,pedigrees,grr,allegro,genehunter,raw_output}
+mkdir -p $destdir/{preprocessing,pedigrees,grr,allegro,genehunter,inputfiles} #,raw_output}
 
 # notes
 cp README.txt $destdir/
+
+# input files
+cp map.txt maf.txt genotypes pedfile.pro $destdir/inputfiles
 
 # pedigrees
 cp family*pdf *elod.txt $destdir/pedigrees
@@ -35,7 +38,8 @@ for i in `ls allegro/allegro_lod*ps`; do
 	ps2pdf $i allegro/${out}pdf
 done
 # allegro individual families
-for i in `cut -f1 pedfile.pro | uniq`; do
+#for i in `cut -f1 pedfile.pro | uniq`; do
+for i in `awk '{ print $1 }' pedfile.pro | uniq`; do
 	if [[ -d allegro-family$i ]] ; then
 		mkdir $destdir/allegro/allegro-family$i
 		for j in `ls allegro-family$i/allegro_lod*ps`; do
@@ -44,9 +48,12 @@ for i in `cut -f1 pedfile.pro | uniq`; do
 			ps2pdf $j allegro-family$i/${out}pdf
 		done
 		cp allegro-family$i/*pdf $destdir/allegro/allegro-family$i/
+		cp allegro-family$i/messner*txt $destdir/allegro/allegro-family$i/
 	fi
 done
-cp allegro/allegro_lod*pdf allegro/messner*txt allegro/haplotype*pdf $destdir/allegro
+cp allegro/allegro_lod*pdf allegro/messner*txt $destdir/allegro
+mkdir $destdir/allegro/haplotypes
+cp allegro/haplotype*pdf $destdir/allegro/haplotypes
 
 # genehunter
 for i in `ls gh_200/gh_snp_lod*ps`; do 
@@ -55,7 +62,8 @@ for i in `ls gh_200/gh_snp_lod*ps`; do
 	ps2pdf $i gh_200/${out}pdf
 done
 # genehunter individual families
-for i in `cut -f1 pedfile.pro | uniq`; do
+#for i in `cut -f1 pedfile.pro | uniq`; do
+for i in `awk '{ print $1 }' pedfile.pro | uniq`; do
 	if [[ -d genehunter-family$i ]] ; then
 		mkdir $destdir/genehunter/genehunter-family$i
 		for j in `ls genehunter-family$i/gh_snp_lod*ps`; do
@@ -64,15 +72,17 @@ for i in `cut -f1 pedfile.pro | uniq`; do
 			ps2pdf $j genehunter-family$i/${out}pdf
 		done
 		cp genehunter-family$i/*pdf $destdir/genehunter/genehunter-family$i/
+		cp genehunter-family$i/messner*txt $destdir/genehunter/genehunter-family$i/
 	fi
 done
 cp gh_200/gh_snp_lod*pdf gh_200/messner*txt $destdir/genehunter
 
 # zip and copy the raw output
-zip $destdir/raw_output/genehunter.zip gh_200/c*/gh*out
-zip $destdir/raw_output/allegro.zip allegro/c*/param*
+#zip $destdir/raw_output/genehunter.zip gh_200/c*/gh*out
+#zip $destdir/raw_output/allegro.zip allegro/c*/param*
 
 # convert for windows
+unix2dos $destdir/*/*/*txt
 unix2dos $destdir/*/*txt
 unix2dos $destdir/*txt
 

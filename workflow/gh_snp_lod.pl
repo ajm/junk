@@ -170,7 +170,8 @@ sub pr_batch {
 	print out5 "set autoscale\n";
 	print out5 "set nokey\n";
 	if ($tit==1) {print out5 "set title \"$titel\\n\"\n";}
-	print out5 "set xlabel \"MB\"\n";
+	print out5 "set xlabel \"cM\"\n";
+#	print out5 "set xlabel \"MB\"\n";
 	print out5 "set ylabel \"LOD\"\n";
 	my $ypos = $ymax + (($ymax-$ymin)/14);
 	

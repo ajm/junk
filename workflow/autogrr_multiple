@@ -8,8 +8,8 @@ fi
 
 project=$1
 
-for i in `awk '{ print $1 }' grr_pedfile.dat | sort -n | uniq`; do
-	grep "^$i" grr_pedfile.dat > grr_pedfile.dat.$i
+for i in `cut -f1 -d' ' grr_pedfile.dat | sort -n | uniq`; do
+	grep "^$i\W" grr_pedfile.dat > grr_pedfile.dat.$i
 	autogrr "$project-family-$i" grr_pedfile.dat.$i
 
 	sleep 2

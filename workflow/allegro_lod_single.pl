@@ -55,8 +55,8 @@ my $status=0;
 open (out1,">$pfad/lod.plt") || die "could not open lod.plt :$!\n";
 open (out2,">$pfad/hlod.plt") || die "could not open hlod.plt :$!\n";
 
-# foreach my $dir (c21) {
-foreach my $dir (c01,c02,c03,c04,c05,c06,c07,c08,c09,c10,c11,c12,c13,c14,c15,c16,c17,c18,c19,c20,c21,c22,c23,cx) { # c24
+foreach my $dir ("c$ARGV[0]") {
+#foreach my $dir (c01,c02,c03,c04,c05,c06,c07,c08,c09,c10,c11,c12,c13,c14,c15,c16,c17,c18,c19,c20,c21,c22,c23,cx) { # c24
 	if (-d $dir) {
 		$status=0;
 		my $chr=$dir;
@@ -161,8 +161,8 @@ sub pr_batch {
 	print out5 "set autoscale\n";
 	print out5 "set nokey\n";
 	if ($title == 1) { print out5 "set title \"$titel\"\n";}
-	#print out5 "set xlabel \"cM\"\n";
-	print out5 "set xlabel \"MB\"\n";
+	print out5 "set xlabel \"cM\"\n";
+#	print out5 "set xlabel \"MB\"\n";
 	if ($label == 1) {
 		my $ypos = $ymax + (($ymax-$ymin)/35);
 		foreach (keys %chrlabel) {print out5 "set label \"$_\" at $chrlabel{$_}\,$ypos font \"Ariel,8\"\n";}
@@ -180,12 +180,13 @@ sub pr_batch {
 	}
 	else {
 		print out5 "set ylabel \"LOD\"\n";
-		print out5 "set output \"allegro_lod_${chr}.ps\"\n";
+#		print out5 "set output \"allegro_lod_${chr}.ps\"\n";
+        print out5 "set output \"allegro_lod_chr$ARGV[0].ps\"\n";
 		print out5 "plot \[$xmin\:$xsum\] \[$ymin\:$ymax\]  \'chr_line\' notitle with lines lt 0, \'lod.plt\' title 'LOD' with lines lt 1\n";
 	}		
-	print out5 "set terminal x11\n";
-	print out5 "replot\n";
-	print out5 "\npause -1 \"Hit return to continue\"\n\n";
+#	print out5 "set terminal x11\n";
+#	print out5 "replot\n";
+#	print out5 "\npause -1 \"Hit return to continue\"\n\n";
 
 	close (out5);
 

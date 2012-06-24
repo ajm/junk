@@ -161,7 +161,8 @@ sub pr_batch {
 	print out5 "set autoscale\n";
 	print out5 "set nokey\n";
 	if ($title == 1) { print out5 "set title \"$titel\"\n";}
-	print out5 "set xlabel \"MB\"\n";
+	print out5 "set xlabel \"cM\"\n";
+#	print out5 "set xlabel \"MB\"\n";
 	if ($label == 1) {
 		my $ypos = $ymax + (($ymax-$ymin)/35);
 		foreach (keys %chrlabel) {print out5 "set label \"$_\" at $chrlabel{$_}\,$ypos font \"Ariel,8\"\n";}
@@ -209,9 +210,9 @@ exit 0;
 # removes files in the current folder with the extension *.plt *.gp and chr_line
 #
 sub Clean { 
-unlink glob("*.plt");
-unlink glob("*.gp");
-unlink "chr_line";
+#unlink glob("*.plt");
+#unlink glob("*.gp");
+#unlink "chr_line";
 exit 0;
 }
 

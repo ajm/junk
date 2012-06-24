@@ -18,10 +18,11 @@ if [[ $program = 'allegro' ]] ; then
 elif [[ $program = 'genehunter' ]] ; then
 	command=gh_snp_lod_single.pl
 elif [[ $program = 'simwalk' ]] ; then
-	echo "simwalk not implemented yet..."
-	echo "bug me about it and i will fix it ;-)"
-	echo
-	exit -1
+	#echo "simwalk not implemented yet..."
+	#echo "bug me about it and i will fix it ;-)"
+	#echo
+	#exit -1
+	command=sw_snp_lod_single.pl
 else 
 	usage
 	exit -1
